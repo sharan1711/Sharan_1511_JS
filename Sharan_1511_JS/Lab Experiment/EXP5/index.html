@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Shopping Cart Calculator</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f4f6f8;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h2 { margin-top: 0; color: #111; }
+        
+        /* Form Layout Design */
+        .input-form {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 550px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+        input, button {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        button.add-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        button.add-btn:hover { background-color: #218838; }
+        button.delete-btn {
+            background-color: transparent;
+            color: #dc3545;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 5px;
+            line-height: 1;
+            width: auto;
+        }
+        button.delete-btn:hover { color: #bd2130; }
+
+        /* Cart Row Items Styling */
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .item-details { display: flex; flex-direction: column; }
+        .item-meta { font-size: 0.85rem; color: #666; }
+        
+        /* Pricing Summary Receipt Display Box */
+        .receipt {
+            background-color: #f1f3f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+        }
+        .total-row {
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-top: 2px dashed #b2baba;
+            padding-top: 10px;
+            margin-top: 10px;
+            color: #000;
+        }
+        .discount-text { color: #d93025; }
+        .empty-message {
+            text-align: center;
+            color: #868e96;
+            padding: 20px 0;
+            font-style: italic;
+        }
+        
+        /* Assignment Identification Footer Reference Placement */
+        footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Dynamic Shopping Cart</h2>
+    
+    <!-- Changed to a formal form layout with a block handler -->
+    <form class="input-form" onsubmit="addItemToCart(event)">
+        <h4 style="margin: 0 0 10px 0; color: #495057;">Add Item to Cart</h4>
+        <div class="form-grid">
+            <input type="text" id="input-name" placeholder="Item Name (e.g., Shoes)">
+            <input type="number" id="input-price" placeholder="Price (₹)" min="0" step="0.01">
+            <input type="number" id="input-qty" placeholder="Qty" min="1" value="1">
+        </div>
+        <button type="submit" class="add-btn">Add Item</button>
+    </form>
+    
+    <!-- Render items hook -->
+    <div id="cart-items-list"></div>
+
+    <!-- Final Receipt Display Calculation Targets Area -->
+    <div class="receipt">
+        <div class="receipt-row">
+            <span>Subtotal:</span>
+            <span id="res-subtotal">₹0.00</span>
+        </div>
+        <div class="receipt-row discount-text">
+            <span>Auto Bulk Discount (<span id="applied-tier-rate">0</span>%):</span>
+            <span>-₹<span id="res-coupon-discount">0.00</span></span>
+        </div>
+        <div class="receipt-row total-row">
+            <span>Final Total:</span>
+            <span id="res-total">₹0.00</span>
+        </div>
+    </div>
+
+    <!-- Assignment Identification Footnote Information -->
+    <footer>
+        Sharan Asekar 25070521511
+    </footer>
+</div>
+
+<script>
+    // 1. Array Data Matrix State Storage Base
+    let shoppingCart = [];
+
+    // 2. Action Input Submission Event Handler Function Logic Pipeline
+    function addItemToCart(event) {
+        // ABSOLUTE FIX: Safely stop the default browser page reload on form submit
+        if (event) event.preventDefault();
+
+        const nameVal = document.getElementById("input-name").value.trim();
+        const priceRaw = document.getElementById("input-price").value;
+        const qtyRaw = document.getElementById("input-qty").value;
+
+        // Validation Checks: Block blanks, letters in number slots, or negative values
+        if (nameVal === "" || priceRaw === "" || qtyRaw === "") {
+            alert("Please provide valid data inside Name, Price, and Quantity fields.");
+            return;
+        }
+
+        const price = parseFloat(priceRaw);
+        const quantity = parseInt(qtyRaw);
+
+        if (isNaN(price) || price < 0 || isNaN(quantity) || quantity <= 0) {
+            alert("Please enter a positive numeric value for Price and Quantity.");
+            return;
+        }
+
+        // Object Generation Mapping Model
+        const newItem = {
+            id: Date.now() + Math.random(), 
+            name: nameVal,
+            price: price,
+            quantity: quantity
+        };
+
+        // Push element structural trace object into active array matrix
+        shoppingCart.push(newItem);
+
+        // Reset Input form view state configurations instantly 
+        document.getElementById("input-name").value = "";
+        document.getElementById("input-price").value = "";
+        document.getElementById("input-qty").value = "1";
+
+        // Dispatch Interface Refresh Calls Loop Execution Pipelines
+        renderCartUI();
+        runCalculatorEngine();
+    }
+
+    // 3. Clear Specific Tracking Row Key Action Command Method
+    function deleteItem(targetId) {
+        // Core Array Method Implementation: .filter()
+        shoppingCart = shoppingCart.filter(item => item.id !== targetId);
+        renderCartUI();
+        runCalculatorEngine();
+    }
+
+    // 4. Update Screen Visual Row Elements Template Hook Output 
+    function renderCartUI() {
+        const listDisplayContainer = document.getElementById("cart-items-list");
+        listDisplayContainer.innerHTML = ""; // Wipe standard old memory references 
+
+        if (shoppingCart.length === 0) {
+            listDisplayContainer.innerHTML = `<div class="empty-message">Your shopping cart is currently empty. Add items above!</div>`;
+            return;
+        }
+
+        shoppingCart.forEach(item => {
+            const rawLineTotal = item.price * item.quantity;
+
+            listDisplayContainer.innerHTML += `
+                <div class="cart-item">
+                    <div class="item-details">
+                        <strong>${item.name}</strong>
+                        <span class="item-meta">₹${item.price.toFixed(2)} × ${item.quantity}</span>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <strong>₹${rawLineTotal.toFixed(2)}</strong>
+                        <button type="button" class="delete-btn" onclick="deleteItem(${item.id})" title="Remove Item">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // 5. JavaScript Array Calculation Computation Logic Blocks Engine Code 
+    function runCalculatorEngine() {
+        // Step A: Basic Array .filter() sanity sweep execution
+        const activeItems = shoppingCart.filter(item => item.quantity > 0);
+
+        // Step B: Array Method `.reduce()` - Subtotal Aggregator Loop
+        const subtotal = activeItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+        // Step C: Rule Specification - Automatic Dynamic Rupee Scale Pricing Ladder Logic Evaluation
+        let autoDiscountPctRate = 0;
+        if (subtotal >= 3000) {
+            autoDiscountPctRate = 30; // 30% discount over ₹3,000
+        } else if (subtotal >= 2000) {
+            autoDiscountPctRate = 20; // 20% discount over ₹2,000
+        } else if (subtotal >= 1000) {
+            autoDiscountPctRate = 10; // 10% discount over ₹1,000
+        }
+
+        const autoBulkSavingsAmount = subtotal * (autoDiscountPctRate / 100);
+        const grossFinalTotalSummary = subtotal - autoBulkSavingsAmount;
+
+        // Step D: Target Element Template Strings Mapping to UI Dom Tags Nodes
+        document.getElementById("res-subtotal").innerText = `₹${subtotal.toFixed(2)}`;
+        document.getElementById("applied-tier-rate").innerText = autoDiscountPctRate;
+        document.getElementById("res-coupon-discount").innerText = autoBulkSavingsAmount.toFixed(2);
+        document.getElementById("res-total").innerText = `₹${grossFinalTotalSummary.toFixed(2)}`;
+    }
+
+    // Initialize UI Interface View States on Page Load Triggers Setup Bootstrap
+    renderCartUI();
+    runCalculatorEngine();
+</script>
+
+</body>
+</html>
